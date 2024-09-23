@@ -25,7 +25,7 @@ begin
     dbms_output.put_line('ID объекта не может быть пустым');
   end if;
 
-  if v_payment_id is null then
+  if v_payment_error_reason is null then
     dbms_output.put_line('Причина не может быть пустой');
   end if;
 
@@ -45,7 +45,7 @@ begin
     dbms_output.put_line('ID объекта не может быть пустым');
   end if;
 
-  if v_payment_id is null then
+  if v_payment_cancel_reason is null then
     dbms_output.put_line('Причина не может быть пустой');
   end if;
 
