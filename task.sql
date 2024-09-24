@@ -17,7 +17,7 @@ end;
 declare
   c_payment_error_discription constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
   с_payment_error_status constant number(10) := 2;
-  v_payment_error_reason varchar2(200 char);-- := 'недостаточно средств';
+  v_payment_error_reason varchar2(200 char) := 'недостаточно средств';
   v_current_dtime date := sysdate;
   v_payment_id number(38);
 begin
