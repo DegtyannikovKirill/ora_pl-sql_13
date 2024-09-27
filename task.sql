@@ -5,9 +5,9 @@
 -- Создание платежа
 declare
   c_payment_create_discription constant varchar2(200 char) := 'Платеж создан';
-  с_payment_create_status constant number(10) := 0;
+  с_payment_create_status constant payment.status%type := 0;
   v_current_dtime date := sysdate;
-  v_payment_id number(38);
+  v_payment_id payment.payment_id%type;
 begin
   dbms_output.put_line(c_payment_create_discription||'. Статус: '||с_payment_create_status||'. Payment_id: '||v_payment_id);
   dbms_output.put_line(to_char(v_current_dtime,'dd.mm.yyyy'));
@@ -16,10 +16,10 @@ end;
 -- Ошибка проведения платежа
 declare
   c_payment_error_discription constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
-  с_payment_error_status constant number(10) := 2;
-  v_payment_error_reason varchar2(200 char) := 'недостаточно средств';
+  с_payment_error_status constant payment.status%type := 2;
+  v_payment_error_reason payment.status_change_reason%type := 'недостаточно средств';
   v_current_dtime date := sysdate;
-  v_payment_id number(38);
+  v_payment_id payment.payment_id%type;
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
@@ -36,10 +36,10 @@ end;
 -- Отмена платежа
 declare
   c_payment_cancel_discription constant varchar2(200 char) := 'Отмена платежа с указанием причины.';
-  с_payment_cancel_status constant number(10) := 3;
-  v_payment_cancel_reason varchar2(200 char) := 'ошибка пользователя';
+  с_payment_cancel_status constant payment.status%type := 3;
+  v_payment_cancel_reason payment.status_change_reason%type := 'ошибка пользователя';
   v_current_dtime date := sysdate;
-  v_payment_id number(38) := 1;
+  v_payment_id payment.payment_id%type := 1;
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
@@ -56,9 +56,9 @@ end;
 -- Успешное завершение платежа
 declare
   c_payment_success_discription constant varchar2(200 char) := 'Успешное завершение платежа';
-  c_payment_success_status constant number(10) := 1;
+  c_payment_success_status constant payment.status%type := 1;
   v_current_dtime timestamp := systimestamp;
-  v_payment_id number(38) := 2;
+  v_payment_id payment.payment_id%type := 2;
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
@@ -72,7 +72,7 @@ end;
 declare
   c_payment_update_discription constant varchar2(200 char) := 'Данные платежа добавлены или обновлены';
   v_current_dtime timestamp := systimestamp;
-  v_payment_id number(38) := 3;
+  v_payment_id payment.payment_id%type := 3;
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
@@ -86,7 +86,7 @@ end;
 declare
   c_payment_delete_discription constant varchar2(200 char) := 'Детали платежа удалены';
   v_current_dtime timestamp := systimestamp;
-  v_payment_id number(38) := 4;
+  v_payment_id payment.payment_id%type := 4;
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
