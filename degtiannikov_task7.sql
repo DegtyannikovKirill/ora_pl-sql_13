@@ -31,9 +31,7 @@ declare
   v_payment_detail_field_rec payment_detail_field%rowtype;
 begin
   begin
-    select t.field_id,
-           t.name,
-           t.description
+    select *
     into v_payment_detail_field_rec
     from payment_detail_field t
     where rownum = 1;
@@ -49,9 +47,9 @@ begin
     dbms_output.put_line('v_payment_detail_field_rec It’s null');
   else
    dbms_output.put_line('v_payment_detail_field_rec: field_id = '||v_payment_detail_field_rec.field_id||', '||
-                                                   'name = '||v_payment_detail_field_rec.name||', '||
-                                                   'description = '||v_payment_detail_field_rec.description
-                      );
+                                                    'name = '||v_payment_detail_field_rec.name||', '||
+                                                    'description = '||v_payment_detail_field_rec.description
+                       );
   end if;
 end;
 /
