@@ -8,6 +8,10 @@ declare
   с_payment_create_status constant payment.status%type := 0;
   v_current_dtime date := sysdate;
   v_payment_id payment.payment_id%type;
+  v_payment_detail_data t_payment_detail_array := t_payment_detail_array( t_payment_detail(1, 'Мобильное приложение банка XYZ')
+                                                                        , t_payment_detail(2, '192.168.1.1')
+                                                                        , t_payment_detail(3, 'Оплата за услуги связи за сентябрь')
+                                                                        );
 begin
   dbms_output.put_line(c_payment_create_discription||'. Статус: '||с_payment_create_status||'. Payment_id: '||v_payment_id);
   dbms_output.put_line(to_char(v_current_dtime,'dd.mm.yyyy'));
@@ -73,6 +77,9 @@ declare
   c_payment_update_discription constant varchar2(200 char) := 'Данные платежа добавлены или обновлены';
   v_current_dtime timestamp := systimestamp;
   v_payment_id payment.payment_id%type := 3;
+  v_payment_detail_data t_payment_detail_array := t_payment_detail_array( t_payment_detail(1, 'Сайт банка XYZ')
+                                                                        , t_payment_detail(3, 'Оплата за услуги связи')
+                                                                        );
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
@@ -87,6 +94,7 @@ declare
   c_payment_delete_discription constant varchar2(200 char) := 'Детали платежа удалены';
   v_current_dtime timestamp := systimestamp;
   v_payment_id payment.payment_id%type := 4;
+  v_delete_payment_filelds t_number_array := t_number_array(1,4);
 begin
   if v_payment_id is null then
     dbms_output.put_line('ID объекта не может быть пустым');
