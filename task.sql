@@ -13,6 +13,22 @@ declare
                                                                         , t_payment_detail(3, 'Оплата за услуги связи за сентябрь')
                                                                         );
 begin
+  if v_payment_detail_data is not empty then
+    for rec in v_payment_detail_data.first .. v_payment_detail_data.last loop
+      if v_payment_detail_data(rec).field_id is null then
+        dbms_output.put_line('ID поля не может быть пустым');
+      end if;
+
+      if v_payment_detail_data(rec).field_value is null then
+        dbms_output.put_line('Значение в поле не может быть пустым');
+      end if;
+
+    end loop;
+  else
+    dbms_output.put_line('Коллекция не содержит данных');
+  end if;
+
+  
   dbms_output.put_line(c_payment_create_discription||'. Статус: '||с_payment_create_status||'. Payment_id: '||v_payment_id);
   dbms_output.put_line(to_char(v_current_dtime,'dd.mm.yyyy'));
 end;
@@ -85,6 +101,21 @@ begin
     dbms_output.put_line('ID объекта не может быть пустым');
   end if;
 
+  if v_payment_detail_data is not empty then
+    for rec in v_payment_detail_data.first .. v_payment_detail_data.last loop
+      if v_payment_detail_data(rec).field_id is null then
+        dbms_output.put_line('ID поля не может быть пустым');
+      end if;
+
+      if v_payment_detail_data(rec).field_value is null then
+        dbms_output.put_line('Значение в поле не может быть пустым');
+      end if;
+    end loop;
+  else
+    dbms_output.put_line('Коллекция не содержит данных');
+  end if;
+
+
   dbms_output.put_line(c_payment_update_discription||' по списку id_поля/значение. Payment_id: '||v_payment_id);
   dbms_output.put_line(to_char(v_current_dtime, 'hh24:mi:ss.ff'));
 end;
@@ -100,7 +131,13 @@ begin
     dbms_output.put_line('ID объекта не может быть пустым');
   end if;
 
+  if v_delete_payment_filelds is empty then
+    dbms_output.put_line('Коллекция не содержит данных');
+  end if;
+
   dbms_output.put_line(c_payment_delete_discription||' по списку id_полей. Payment_id: '||v_payment_id);
   dbms_output.put_line(to_char(v_current_dtime, 'yyyy-mm-dd hh24:mi:ss.ff9'));
+  dbms_output.put_line('Колличество удаляемых полей: '||v_delete_payment_filelds.count);
+
 end;
 /
