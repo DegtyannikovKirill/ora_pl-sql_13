@@ -1,12 +1,12 @@
 create or replace package payment_detail_api_pack is
 
-  -- Author  : Дегтянников К.А.
-  -- Created : 14.10.2024 18:52:13
-  -- Purpose : API по деталям платежа
+-- Author  : Дегтянников К.А.
+-- Created : 14.10.2024 18:52:13
+-- Purpose : API по деталям платежа
 
-  -- Описание 
-  c_delete_discription    constant varchar2(200 char) := 'Детали платежа удалены';
-  c_update_discription    constant varchar2(200 char) := 'Данные платежа добавлены или обновлены';
+-- Описание 
+c_delete_discription    constant varchar2(200 char) := 'Детали платежа удалены';
+c_update_discription    constant varchar2(200 char) := 'Датали платежа добавлены или обновлены';
 
 /*** 
 * "Добавление/обновление данных по платежу"

@@ -1,27 +1,27 @@
 create or replace package payment_api_pack is
 
-  -- Author  : Дегтянников К.А.
-  -- Created : 14.10.2024 18:52:13
-  -- Purpose : API по платежу
+-- Author  : Дегтянников К.А.
+-- Created : 14.10.2024 18:52:13
+-- Purpose : API по платежу
 
-  -- Статусы платежа
-  с_status_create                 constant payment.status%type := 0;
-  c_status_success                constant payment.status%type := 1;
-  с_status_error                  constant payment.status%type := 2;
-  с_status_cancel                 constant payment.status%type := 3;
+-- Статусы платежа
+с_status_create                 constant payment.status%type := 0;
+c_status_success                constant payment.status%type := 1;
+с_status_error                  constant payment.status%type := 2;
+с_status_cancel                 constant payment.status%type := 3;
 
-  -- Описание статусов платежа
-  c_discription_create            constant varchar2(200 char) := 'Платеж создан';
-  c_discription_success           constant varchar2(200 char) := 'Успешное завершение платежа';
-  c_discription_error             constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
-  c_discription_cancel            constant varchar2(200 char) := 'Отмена платежа с указанием причины.';
+-- Описание статусов платежа
+c_discription_create            constant varchar2(200 char) := 'Платеж создан';
+c_discription_success           constant varchar2(200 char) := 'Успешное завершение платежа';
+c_discription_error             constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
+c_discription_cancel            constant varchar2(200 char) := 'Отмена платежа с указанием причины.';
 
-  -- Описание ошибок
-  c_field_id_is_null              constant varchar2(200 char) := 'ID поля не может быть пустым';
-  c_field_valie_is_null           constant varchar2(200 char) := 'Значение в поле не может быть пустым';
-  c_array_is_empty                constant varchar2(200 char) := 'Коллекция не содержит данных';
-  c_payment_reason_is_null        constant varchar2(200 char) := 'Причина не может быть пустой';
-  c_object_id_is_null             constant varchar2(200 char) := 'ID объекта не может быть пустым';
+-- Описание ошибок
+c_field_id_is_null              constant varchar2(200 char) := 'ID поля не может быть пустым';
+c_field_valie_is_null           constant varchar2(200 char) := 'Значение в поле не может быть пустым';
+c_array_is_empty                constant varchar2(200 char) := 'Коллекция не содержит данных';
+c_payment_reason_is_null        constant varchar2(200 char) := 'Причина не может быть пустой';
+c_object_id_is_null             constant varchar2(200 char) := 'ID объекта не может быть пустым';
 
 /*** 
 * "Создание платежа"
