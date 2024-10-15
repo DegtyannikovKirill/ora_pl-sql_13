@@ -10,11 +10,7 @@ c_status_success                constant payment.status%type := 1;
 с_status_error                  constant payment.status%type := 2;
 с_status_cancel                 constant payment.status%type := 3;
 
--- Описание статусов платежа
-c_discription_create            constant varchar2(200 char) := 'Платеж создан';
-c_discription_success           constant varchar2(200 char) := 'Успешное завершение платежа';
-c_discription_error             constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
-c_discription_cancel            constant varchar2(200 char) := 'Отмена платежа с указанием причины.';
+-- Причины перевода платежа на "проблемный" статус
 
 -- Описание ошибок
 c_field_id_is_null              constant varchar2(200 char) := 'ID поля не может быть пустым';
@@ -26,18 +22,19 @@ c_object_id_is_null             constant varchar2(200 char) := 'ID объект�
 /*** 
 * "Создание платежа"
 * @param p_payment_from_client_id - ОТ КАКОГО клиента платеж
-* @param p_payment_to_client_id   - КАКОМУ клиенту плаатеж
+* @param p_payment_to_client_id   - КАКОМУ клиенту платеж
 * @param p_payment_sum            - сумма платежа
 * @param p_currency_id            - валюта
+* @param p_payment_date           - дата занесения платежа
 * @param p_payment_detail_data    - коллекция с деталями платежа
 * 
-* @return NUMBER                  - ID созданного платежа
+* @return NUMBER - ID созданного платежа
 ***/
 function create_payment( p_payment_from_client_id   payment.from_client_id%type
                        , p_payment_to_client_id     payment.to_client_id%type
                        , p_payment_sum              payment.summa%type
                        , p_currency_id              payment.currency_id%type
-                       , p_current_dtime            timestamp
+                       , p_payment_date             timestamp
                        , p_payment_detail_data      t_payment_detail_array
                        )
 return payment.payment_id%type;
@@ -49,7 +46,7 @@ return payment.payment_id%type;
 procedure successful_finish_payment(p_payment_id payment.payment_id%type);
 
 /*** 
-* "сброс платежа в ошибочный статус"
+* "Сброс платежа в ошибочный статус"
 * @param p_payment_id             - ID платежа
 * @param p_payment_error_reason   - Причина перевода в ошибочный статус
 ***/
@@ -66,5 +63,5 @@ procedure cancel_payment( p_payment_id              payment.payment_id%type
                         , p_payment_cancel_reason   payment.status_change_reason%type
                         );
 
-end payment_api_pack ;
+end payment_api_pack;
 /

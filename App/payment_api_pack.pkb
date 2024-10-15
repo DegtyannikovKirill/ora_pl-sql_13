@@ -14,11 +14,12 @@ function create_payment( p_payment_from_client_id   payment.from_client_id%type
                        , p_payment_to_client_id     payment.to_client_id%type
                        , p_payment_sum              payment.summa%type
                        , p_currency_id              payment.currency_id%type
-                       , p_current_dtime            timestamp
+                       , p_payment_date             timestamp
                        , p_payment_detail_data      t_payment_detail_array
                        )
 return payment.payment_id%type
 is
+  c_discription_create          constant varchar2(200 char) := 'Платеж создан';
   v_payment_id                  payment.payment_id%type;
 begin
   -- TODO все входные по-идее тоже проверить на null и райзить "Значение в поле не может быть пустым"
@@ -49,7 +50,7 @@ begin
     )
   values
     ( payment_seq.nextval
-    , p_current_dtime
+    , p_payment_date
     , p_payment_sum
     , p_currency_id
     , p_payment_from_client_id
@@ -70,7 +71,7 @@ begin
   from table(p_payment_detail_data) t;
 
   dbms_output.put_line(c_discription_create||'. Статус: '||с_status_create||'. Payment_id: '||v_payment_id);
-  dbms_output.put_line(to_char(p_current_dtime,'dd.mm.yyyy'));
+  dbms_output.put_line(to_char(p_payment_date,'dd.mm.yyyy'));
 
   return v_payment_id;
 
@@ -82,6 +83,7 @@ end create_payment;
 ***/
 procedure successful_finish_payment(p_payment_id payment.payment_id%type)
 is
+  c_discription_success           constant varchar2(200 char) := 'Успешное завершение платежа';
   v_current_dtime                 timestamp := systimestamp;
 begin
   if p_payment_id is null then
@@ -90,7 +92,7 @@ begin
 
   update payment p
   set p.status = c_status_success
-    , p.status_change_reason = c_discription_success
+    , p.status_change_reason = null
   where p.payment_id = p_payment_id
     and p.status = с_status_create;
 
@@ -108,6 +110,7 @@ procedure fail_payment( p_payment_id            payment.payment_id%type
                       , p_payment_error_reason  payment.status_change_reason%type
                       )
 is
+  c_discription_error           constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
   v_current_dtime               date := sysdate;
 begin
   if p_payment_id is null then
@@ -138,6 +141,7 @@ procedure cancel_payment( p_payment_id              payment.payment_id%type
                         , p_payment_cancel_reason   payment.status_change_reason%type
                         )
 is
+  c_discription_cancel           constant varchar2(200 char) := 'Отмена платежа с указанием причины.';
   v_current_dtime                date := sysdate;
 begin
   if p_payment_id is null then

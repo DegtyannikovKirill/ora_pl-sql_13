@@ -1,7 +1,7 @@
 -- Заготовка под тесты
-select * from payment p where p.payment_id = 23
+select * from payment p where p.payment_id = 41
 /
-select * from payment_detail pd where pd.payment_id = 23
+select * from payment_detail pd where pd.payment_id = 41
 /
 
 -- Проверка "Создание клиенат"
@@ -23,7 +23,7 @@ begin
                                                  , p_payment_to_client_id   => v_payment_to_client_id
                                                  , p_payment_sum            => v_payment_sum
                                                  , p_currency_id            => v_currency_id
-                                                 , p_current_dtime          => v_current_dtime
+                                                 , p_payment_date           => v_current_dtime
                                                  , p_payment_detail_data    => v_payment_detail_data
                                                  );
   dbms_output.put_line('v_payment_id: '|| v_payment_id);
