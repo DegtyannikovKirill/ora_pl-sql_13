@@ -18,6 +18,14 @@ c_field_valie_is_null           constant varchar2(200 char) := 'Значение
 c_array_is_empty                constant varchar2(200 char) := 'Коллекция не содержит данных';
 c_payment_reason_is_null        constant varchar2(200 char) := 'Причина не может быть пустой';
 c_object_id_is_null             constant varchar2(200 char) := 'ID объекта не может быть пустым';
+c_object_value_is_null          constant varchar2(200 char) := 'Значение объекта не может быть пустым';
+
+-- Коды ошибок
+c_error_code_invalid_parameter  constant number(10) := -20100;
+
+-- Объекты исключений
+e_invalid_parameter             exception;
+pragma exception_init(e_invalid_parameter, c_error_code_invalid_parameter);
 
 /*** 
 * "Создание платежа"
