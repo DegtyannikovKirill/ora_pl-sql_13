@@ -1,4 +1,25 @@
-create or replace package body payment_detail_api_pack is
+﻿create or replace package body payment_detail_api_pack is
+
+-- флажок на DML
+g_payment_detail_dml_allowed boolean := false;
+
+-- проверка на прямой DML
+procedure check_payment_detail_dml_allowed is
+begin
+  if not(g_payment_detail_dml_allowed) then
+    raise_application_error(payment_api_pack.c_error_code_payment_detail_dml_disallow, payment_api_pack.c_error_msg_payment_detail_dml_disallow);
+  end if;
+end;
+
+procedure allow_dml is
+begin
+  g_payment_detail_dml_allowed := true;
+end allow_dml;
+
+procedure disallow_dml is
+begin
+  g_payment_detail_dml_allowed := false;
+end disallow_dml;
 
 /*** 
 * "Добавление/обновление данных по платежу"
@@ -14,38 +35,48 @@ is
   e_error_input_param             exception;
 begin
   if p_payment_id is null then
-    v_error_message := payment_api_pack.c_object_id_is_null;
+    v_error_message := payment_api_pack.c_error_msg_object_id_is_null;
     raise e_error_input_param;
   end if;
 
   if p_payment_detail_data is not empty then
     for rec in p_payment_detail_data.first .. p_payment_detail_data.last loop
       if p_payment_detail_data(rec).field_id is null then
-        v_error_message := payment_api_pack.c_field_id_is_null;
+        v_error_message := payment_api_pack.c_error_msg_field_id_is_null;
         raise e_error_input_param;
       end if;
 
       if p_payment_detail_data(rec).field_value is null then
-        v_error_message := payment_api_pack.c_field_valie_is_null;
+        v_error_message := payment_api_pack.c_error_msg_field_valie_is_null;
         raise e_error_input_param;
       end if;
     end loop;
   else
-    v_error_message := payment_api_pack.c_array_is_empty;
+    v_error_message := payment_api_pack.c_error_msg_array_is_empty;
     raise e_error_input_param;
   end if;
 
-  merge into payment_detail pd
-  using ( select p_payment_id as payment_id
-               , value(v).field_id as field_id
-               , value(v).field_value as field_value
-          from table(p_payment_detail_data) v ) v_arr
-     on (pd.payment_id = v_arr.payment_id and pd.field_id = v_arr.field_id)
-  when matched then
-    update set pd.field_value = v_arr.field_value
-  when not matched then
-    insert (payment_id, field_id, field_value)
-    values (v_arr.payment_id, v_arr.field_id, v_arr.field_value);
+  begin
+    allow_dml;
+  
+    merge into payment_detail pd
+    using ( select p_payment_id as payment_id
+                 , value(v).field_id as field_id
+                 , value(v).field_value as field_value
+            from table(p_payment_detail_data) v ) v_arr
+       on (pd.payment_id = v_arr.payment_id and pd.field_id = v_arr.field_id)
+    when matched then
+      update set pd.field_value = v_arr.field_value
+    when not matched then
+      insert (payment_id, field_id, field_value)
+      values (v_arr.payment_id, v_arr.field_id, v_arr.field_value);
+
+    disallow_dml;
+  exception
+    when others then
+      disallow_dml;
+      raise;
+  end;
 
   dbms_output.put_line(c_update_discription||' по списку id_поля/значение. Payment_id: '||p_payment_id);
   dbms_output.put_line(to_char(v_current_dtime, 'hh24:mi:ss.ff'));
@@ -70,19 +101,29 @@ is
   e_error_input_param           exception;
 begin
   if p_payment_id is null then
-    v_error_message := payment_api_pack.c_object_id_is_null;
+    v_error_message := payment_api_pack.c_error_msg_object_id_is_null;
     raise e_error_input_param;
   end if;
 
   if p_delete_payment_filelds is empty or p_delete_payment_filelds is null then
-    v_error_message := payment_api_pack.c_array_is_empty;
+    v_error_message := payment_api_pack.c_error_msg_array_is_empty;
     raise e_error_input_param;
   end if;
 
-  delete payment_detail pd
-  where pd.payment_id = p_payment_id
-    and pd.field_id in ( select column_value 
-                         from table(p_delete_payment_filelds));
+  begin
+    allow_dml;
+  
+    delete payment_detail pd
+    where pd.payment_id = p_payment_id
+      and pd.field_id in ( select column_value 
+                           from table(p_delete_payment_filelds));
+
+    disallow_dml;
+  exception
+    when others then
+      disallow_dml;
+      raise;
+  end;
 
   dbms_output.put_line(c_delete_discription||' по списку id_полей. Payment_id: '||p_payment_id);
   dbms_output.put_line(to_char(v_current_dtime, 'yyyy-mm-dd hh24:mi:ss.ff9'));
