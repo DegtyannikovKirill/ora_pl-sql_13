@@ -106,6 +106,8 @@ begin
   return v_payment_id;
 
 exception
+  when common_pack.e_invalid_parameter then
+    raise;
   when e_error_input_param then
     raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
