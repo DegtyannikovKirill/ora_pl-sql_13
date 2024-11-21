@@ -1,4 +1,4 @@
-﻿create or replace package body payment_api_pack  is
+create or replace package body payment_api_pack  is
 
 -- флажок на DML
 g_payment_dml_allowed boolean := false;
@@ -6,8 +6,9 @@ g_payment_dml_allowed boolean := false;
 -- проверка на прямой DML
 procedure check_payment_dml_allowed is
 begin
-  if not(g_payment_dml_allowed) then
-    raise_application_error(c_error_code_payment_dml_disallow, c_error_msg_payment_dml_disallow);
+  if not(g_payment_dml_allowed) and not common_pack.is_manual_changes_allowed() then
+    raise_application_error( common_pack.c_error_code_payment_dml_disallow
+                           , common_pack.c_error_msg_payment_dml_disallow);
   end if;
 end;
 
@@ -20,6 +21,18 @@ procedure disallow_dml is
 begin
   g_payment_dml_allowed := false;
 end disallow_dml;
+
+
+-- проверка на возможность удаления данных
+procedure check_payment_delete
+is
+begin
+  if not common_pack.is_manual_changes_allowed() then
+    raise_application_error( common_pack.c_error_code_delete_forbidden
+                       , common_pack.c_error_msg_delete_forbidden);
+  end if;
+
+end;
 
 /*** 
 * "Создание платежа"
@@ -40,7 +53,6 @@ function create_payment( p_payment_from_client_id   payment.from_client_id%type
                        )
 return payment.payment_id%type
 is
-  c_discription_create          constant varchar2(200 char) := 'Платеж создан';
   v_payment_id                  payment.payment_id%type;
   v_error_message               varchar2(200 char);
   e_error_input_param           exception;
@@ -53,28 +65,9 @@ begin
     or p_currency_id is null
     or p_payment_date is null
   then
-    v_error_message := c_error_msg_object_value_is_null;
+    v_error_message := common_pack.c_error_msg_object_value_is_null;
     raise e_error_input_param;
   end if;
-
-  if p_payment_detail_data is not empty then
-    for rec in p_payment_detail_data.first .. p_payment_detail_data.last loop
-      if p_payment_detail_data(rec).field_id is null then
-        v_error_message := c_error_msg_field_id_is_null;
-        raise e_error_input_param;
-      end if;
-
-      if p_payment_detail_data(rec).field_value is null then
-        v_error_message := c_error_msg_field_valie_is_null;
-        raise e_error_input_param;
-      end if;
-
-    end loop;
-  else
-    v_error_message := c_error_msg_array_is_empty;
-    raise e_error_input_param;
-  end if;
-
 
   begin
     allow_dml;
@@ -110,15 +103,11 @@ begin
   payment_detail_api_pack.insert_or_update_payment_detail( p_payment_id => v_payment_id
                                                          , p_payment_detail_data => p_payment_detail_data);
 
-
-  dbms_output.put_line(c_discription_create||'. Статус: '||с_status_create||'. Payment_id: '||v_payment_id);
-  dbms_output.put_line(to_char(p_payment_date,'dd.mm.yyyy'));
-
   return v_payment_id;
 
 exception
   when e_error_input_param then
-    raise_application_error(c_error_code_invalid_parameter, v_error_message);
+    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.create_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end create_payment;
@@ -129,13 +118,11 @@ end create_payment;
 ***/
 procedure successful_finish_payment(p_payment_id payment.payment_id%type)
 is
-  c_discription_success           constant varchar2(200 char) := 'Успешное завершение платежа';
-  v_current_dtime                 timestamp := systimestamp;
   v_error_message                 varchar2(200 char);
   e_error_input_param             exception;
 begin
   if p_payment_id is null then
-    v_error_message := c_error_msg_object_id_is_null;
+    v_error_message := common_pack.c_error_msg_object_id_is_null;
     raise e_error_input_param;
   end if;
   
@@ -155,11 +142,9 @@ begin
       raise;
   end;
 
-  dbms_output.put_line(c_discription_success||'. Статус: '||c_status_success||'. Payment_id: '||p_payment_id);
-  dbms_output.put_line(to_char(v_current_dtime, 'DD Mon YYYY'));
 exception
   when e_error_input_param then
-    raise_application_error(c_error_code_invalid_parameter, v_error_message);
+    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.successful_finish_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end successful_finish_payment;
@@ -173,18 +158,16 @@ procedure fail_payment( p_payment_id            payment.payment_id%type
                       , p_payment_error_reason  payment.status_change_reason%type
                       )
 is
-  c_discription_error           constant varchar2(200 char) := 'Сброс платежа в "ошибочный статус" с указанием причины.';
-  v_current_dtime               date := sysdate;
   v_error_message               varchar2(200 char);
   e_error_input_param           exception;
 begin
   if p_payment_id is null then
-    v_error_message := c_error_msg_object_id_is_null;
+    v_error_message := common_pack.c_error_msg_object_id_is_null;
     raise e_error_input_param;
   end if;
 
   if p_payment_error_reason is null then
-    v_error_message := c_error_msg_payment_reason_is_null;
+    v_error_message := common_pack.c_error_msg_payment_reason_is_null;
     raise e_error_input_param;
   end if;
 
@@ -203,12 +186,9 @@ begin
       disallow_dml;
       raise;
   end;
-
-  dbms_output.put_line(c_discription_error||' Статус: '||с_status_error||'. Причина: '||p_payment_error_reason||'. Payment_id: '||p_payment_id);
-  dbms_output.put_line(to_char(v_current_dtime, 'dd.mm.yyyy hh24:mi'));
 exception
   when e_error_input_param then
-    raise_application_error(c_error_code_invalid_parameter, v_error_message);
+    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.fail_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end fail_payment;
@@ -222,18 +202,16 @@ procedure cancel_payment( p_payment_id              payment.payment_id%type
                         , p_payment_cancel_reason   payment.status_change_reason%type
                         )
 is
-  c_discription_cancel           constant varchar2(200 char) := 'Отмена платежа с указанием причины.';
-  v_current_dtime                date := sysdate;
   v_error_message                varchar2(200 char);
   e_error_input_param            exception;
 begin
   if p_payment_id is null then
-    v_error_message := c_error_msg_object_id_is_null;
+    v_error_message := common_pack.c_error_msg_object_id_is_null;
     raise e_error_input_param;
   end if;
 
   if p_payment_cancel_reason is null then
-    v_error_message := c_error_msg_payment_reason_is_null;
+    v_error_message := common_pack.c_error_msg_payment_reason_is_null;
     raise e_error_input_param;
   end if;
 
@@ -252,12 +230,9 @@ begin
       disallow_dml;
       raise;
   end;
-
-  dbms_output.put_line(c_discription_cancel||' Статус: '||с_status_cancel||'. Причина: '||p_payment_cancel_reason||'. Payment_id: '||p_payment_id);
-  dbms_output.put_line(to_char(v_current_dtime, 'dd.mm.yyyy hh24:mi:ss'));
 exception
   when e_error_input_param then
-    raise_application_error(c_error_code_invalid_parameter, v_error_message);
+    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.cancel_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end cancel_payment;
