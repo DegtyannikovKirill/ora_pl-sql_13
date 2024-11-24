@@ -22,7 +22,7 @@ procedure check_payment_delete;
 * @param p_payment_to_client_id   - КАКОМУ клиенту платеж
 * @param p_payment_sum            - сумма платежа
 * @param p_currency_id            - валюта
-* @param p_payment_date           - дата занесения платежа
+* @param p_payment_date           - время занесения платежа
 * @param p_payment_detail_data    - коллекция с деталями платежа
 * 
 * @return NUMBER - ID созданного платежа
@@ -31,7 +31,7 @@ function create_payment( p_payment_from_client_id   payment.from_client_id%type
                        , p_payment_to_client_id     payment.to_client_id%type
                        , p_payment_sum              payment.summa%type
                        , p_currency_id              payment.currency_id%type
-                       , p_payment_date             timestamp
+                       , p_payment_date             payment.create_dtime_tech%type
                        , p_payment_detail_data      t_payment_detail_array
                        )
 return payment.payment_id%type;
