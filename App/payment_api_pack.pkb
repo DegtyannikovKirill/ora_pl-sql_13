@@ -40,6 +40,7 @@ end;
 * @param p_payment_to_client_id   - КАКОМУ клиенту плаатеж
 * @param p_payment_sum            - сумма платежа
 * @param p_currency_id            - валюта
+* @param p_payment_date           - время занесения платежа
 * @param p_payment_detail_data    - коллекция с деталями платежа
 * 
 * @return NUMBER                  - ID созданного платежа
@@ -48,15 +49,12 @@ function create_payment( p_payment_from_client_id   payment.from_client_id%type
                        , p_payment_to_client_id     payment.to_client_id%type
                        , p_payment_sum              payment.summa%type
                        , p_currency_id              payment.currency_id%type
-                       , p_payment_date             timestamp
+                       , p_payment_date             payment.create_dtime_tech%type
                        , p_payment_detail_data      t_payment_detail_array
                        )
 return payment.payment_id%type
 is
   v_payment_id                  payment.payment_id%type;
-  v_error_message               varchar2(200 char);
-  e_error_input_param           exception;
-
 begin
   -- проверка входных паарметров
   if p_payment_from_client_id is null 
@@ -65,8 +63,7 @@ begin
     or p_currency_id is null
     or p_payment_date is null
   then
-    v_error_message := common_pack.c_error_msg_object_value_is_null;
-    raise e_error_input_param;
+    raise_application_error(common_pack.c_error_code_invalid_parameter, common_pack.c_error_msg_object_value_is_null);
   end if;
 
   begin
@@ -108,8 +105,6 @@ begin
 exception
   when common_pack.e_invalid_parameter then
     raise;
-  when e_error_input_param then
-    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.create_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end create_payment;
@@ -120,12 +115,9 @@ end create_payment;
 ***/
 procedure successful_finish_payment(p_payment_id payment.payment_id%type)
 is
-  v_error_message                 varchar2(200 char);
-  e_error_input_param             exception;
 begin
   if p_payment_id is null then
-    v_error_message := common_pack.c_error_msg_object_id_is_null;
-    raise e_error_input_param;
+    raise_application_error(common_pack.c_error_code_invalid_parameter, common_pack.c_error_msg_object_id_is_null);
   end if;
   
   begin
@@ -145,8 +137,6 @@ begin
   end;
 
 exception
-  when e_error_input_param then
-    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.successful_finish_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end successful_finish_payment;
@@ -160,17 +150,16 @@ procedure fail_payment( p_payment_id            payment.payment_id%type
                       , p_payment_error_reason  payment.status_change_reason%type
                       )
 is
-  v_error_message               varchar2(200 char);
-  e_error_input_param           exception;
 begin
+
   if p_payment_id is null then
-    v_error_message := common_pack.c_error_msg_object_id_is_null;
-    raise e_error_input_param;
+    raise_application_error( common_pack.c_error_code_invalid_parameter
+                           , common_pack.c_error_msg_object_id_is_null );
   end if;
 
   if p_payment_error_reason is null then
-    v_error_message := common_pack.c_error_msg_payment_reason_is_null;
-    raise e_error_input_param;
+    raise_application_error( common_pack.c_error_code_invalid_parameter
+                           , common_pack.c_error_msg_payment_reason_is_null );
   end if;
 
   begin
@@ -189,8 +178,6 @@ begin
       raise;
   end;
 exception
-  when e_error_input_param then
-    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.fail_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end fail_payment;
@@ -204,17 +191,15 @@ procedure cancel_payment( p_payment_id              payment.payment_id%type
                         , p_payment_cancel_reason   payment.status_change_reason%type
                         )
 is
-  v_error_message                varchar2(200 char);
-  e_error_input_param            exception;
 begin
   if p_payment_id is null then
-    v_error_message := common_pack.c_error_msg_object_id_is_null;
-    raise e_error_input_param;
+    raise_application_error( common_pack.c_error_code_invalid_parameter
+                           , common_pack.c_error_msg_object_id_is_null );
   end if;
 
   if p_payment_cancel_reason is null then
-    v_error_message := common_pack.c_error_msg_payment_reason_is_null;
-    raise e_error_input_param;
+    raise_application_error( common_pack.c_error_code_invalid_parameter
+                           , common_pack.c_error_msg_payment_reason_is_null );
   end if;
 
   begin
@@ -233,8 +218,6 @@ begin
       raise;
   end;
 exception
-  when e_error_input_param then
-    raise_application_error(common_pack.c_error_code_invalid_parameter, v_error_message);
   when others then
     raise_application_error(-20001,'payment_api_pack.cancel_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
 end cancel_payment;
