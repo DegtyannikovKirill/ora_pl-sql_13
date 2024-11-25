@@ -31,7 +31,7 @@ function create_payment( p_payment_from_client_id   payment.from_client_id%type
                        , p_payment_to_client_id     payment.to_client_id%type
                        , p_payment_sum              payment.summa%type
                        , p_currency_id              payment.currency_id%type
-                       , p_payment_date             payment.create_dtime_tech%type
+                       , p_payment_date             payment.create_dtime%type
                        , p_payment_detail_data      t_payment_detail_array
                        )
 return payment.payment_id%type;
