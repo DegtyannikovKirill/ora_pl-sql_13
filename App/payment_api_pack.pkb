@@ -34,6 +34,35 @@ begin
 
 end;
 
+-- блокировка объекта "платеж"
+procedure try_lock_payment(p_payment_id payment.payment_id%type)
+is
+  v_payment_status payment.status%type;
+  e_inactive_state  exception;
+begin
+
+  select t.status
+  into v_payment_status
+  from payment t 
+  where t.payment_id = p_payment_id
+  for update nowait;
+
+  -- платеж уже в финальном статусе
+  if v_payment_status <> с_status_create then
+    raise e_inactive_state;
+  end if;
+
+exception
+  when e_inactive_state then
+    raise_application_error(common_pack.c_error_code_inactive_object_state, common_pack.c_error_msg_inactive_object_state);
+  when no_data_found then
+    raise_application_error(common_pack.c_error_code_object_notfound, common_pack.c_error_msg_object_notfound);
+  when common_pack.e_row_locked then
+    raise_application_error(common_pack.c_error_code_object_locked, common_pack.c_error_msg_object_locked);
+  when others then
+    raise_application_error(-20001,'payment_api_pack.try_lock_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
+end try_lock_payment;
+
 /*** 
 * "Создание платежа"
 * @param p_payment_from_client_id - ОТ КАКОГО клиента платеж
@@ -66,35 +95,30 @@ begin
     raise_application_error(common_pack.c_error_code_invalid_parameter, common_pack.c_error_msg_object_value_is_null);
   end if;
 
-  begin
-    allow_dml;
-    -- создание платежа
-    insert into payment
-      ( payment_id
-      , create_dtime
-      , summa
-      , currency_id
-      , from_client_id
-      , to_client_id
-      , status
-      )
-    values
-      ( payment_seq.nextval
-      , p_payment_date
-      , p_payment_sum
-      , p_currency_id
-      , p_payment_from_client_id
-      , p_payment_to_client_id
-      , с_status_create
-      )
-    returning payment_id into v_payment_id;
 
-    disallow_dml;
-  exception
-    when others then
-      disallow_dml;
-      raise;
-  end;
+  allow_dml;
+  -- создание платежа
+  insert into payment
+    ( payment_id
+    , create_dtime
+    , summa
+    , currency_id
+    , from_client_id
+    , to_client_id
+    , status
+    )
+  values
+    ( payment_seq.nextval
+    , p_payment_date
+    , p_payment_sum
+    , p_currency_id
+    , p_payment_from_client_id
+    , p_payment_to_client_id
+    , с_status_create
+    )
+  returning payment_id into v_payment_id;
+
+  disallow_dml;
 
   -- создание деталей платежа
   payment_detail_api_pack.insert_or_update_payment_detail( p_payment_id => v_payment_id
@@ -103,10 +127,9 @@ begin
   return v_payment_id;
 
 exception
-  when common_pack.e_invalid_parameter then
-    raise;
   when others then
-    raise_application_error(-20001,'payment_api_pack.create_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
+    disallow_dml;
+    raise;
 end create_payment;
 
 /*** 
@@ -120,25 +143,24 @@ begin
     raise_application_error(common_pack.c_error_code_invalid_parameter, common_pack.c_error_msg_object_id_is_null);
   end if;
   
-  begin
-    allow_dml;
 
-    update payment p
-    set p.status = c_status_success
-      , p.status_change_reason = null
-    where p.payment_id = p_payment_id
-      and p.status = с_status_create;
+  -- заблокируем платеж
+  try_lock_payment(p_payment_id);
+  
+  allow_dml;
 
-    disallow_dml;
-  exception
-    when others then
-      disallow_dml;
-      raise;
-  end;
+  update payment p
+  set p.status = c_status_success
+    , p.status_change_reason = null
+  where p.payment_id = p_payment_id
+    and p.status = с_status_create;
+
+  disallow_dml;
 
 exception
   when others then
-    raise_application_error(-20001,'payment_api_pack.successful_finish_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
+    disallow_dml;
+    raise;
 end successful_finish_payment;
 
 /*** 
@@ -162,24 +184,24 @@ begin
                            , common_pack.c_error_msg_payment_reason_is_null );
   end if;
 
-  begin
-    allow_dml;
 
-    update payment p
-    set p.status = с_status_error
-      , p.status_change_reason = p_payment_error_reason
-    where p.payment_id = p_payment_id
-      and p.status = с_status_create;
+  -- заблокируем платеж
+  try_lock_payment(p_payment_id);
+  
+  allow_dml;
 
-    disallow_dml;
-  exception
-    when others then
-      disallow_dml;
-      raise;
-  end;
+  update payment p
+  set p.status = с_status_error
+    , p.status_change_reason = p_payment_error_reason
+  where p.payment_id = p_payment_id
+    and p.status = с_status_create;
+
+  disallow_dml;
+
 exception
   when others then
-    raise_application_error(-20001,'payment_api_pack.fail_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
+    disallow_dml;
+    raise;
 end fail_payment;
 
 /*** 
@@ -202,24 +224,23 @@ begin
                            , common_pack.c_error_msg_payment_reason_is_null );
   end if;
 
-  begin
-    allow_dml;
+  -- заблокируем платеж
+  try_lock_payment(p_payment_id);
+  
+  allow_dml;
 
-    update payment p
-    set p.status = с_status_cancel
-      , p.status_change_reason = p_payment_cancel_reason
-    where p.payment_id = p_payment_id
-      and p.status = с_status_create;
+  update payment p
+  set p.status = с_status_cancel
+    , p.status_change_reason = p_payment_cancel_reason
+  where p.payment_id = p_payment_id
+    and p.status = с_status_create;
 
-    disallow_dml;
-  exception
-    when others then
-      disallow_dml;
-      raise;
-  end;
+  disallow_dml;
+
 exception
   when others then
-    raise_application_error(-20001,'payment_api_pack.cancel_payment: '||dbms_utility.format_error_stack||dbms_utility.format_error_backtrace);
+    disallow_dml;
+    raise;
 end cancel_payment;
 
 end payment_api_pack;

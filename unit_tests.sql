@@ -72,7 +72,7 @@ end;
 /
 -- Проверка "Cброс платежа в ошибочный статус"
 declare
-  v_payment_id                  payment.payment_id%type := 41;
+  v_payment_id                  payment.payment_id%type := 45;
   v_payment_error_reason        payment.status_change_reason%type := 'недостаточно средств';
 begin
   payment_api_pack.fail_payment( p_payment_id           => v_payment_id
@@ -82,18 +82,28 @@ end;
 /
 -- Проверка технических полей ( при изменеии различаются) 
 declare
-  v_payment_id                  payment.payment_id%type := 41;
+  v_payment_id                  payment.payment_id%type := 45;
   v_payment_error_reason        payment.status_change_reason%type := 'недостаточно средств';
 begin
   payment_api_pack.fail_payment( p_payment_id           => v_payment_id
                                , p_payment_error_reason => v_payment_error_reason
                                );
+ select p.create_dtime_tech
+       , p.update_dtime_tech
+  into v_create_dtime_tech
+     , v_update_dtime_tech
+  from payment p
+  where p.payment_id = v_payment_id;
+
+  if v_create_dtime_tech = v_update_dtime_tech then
+    raise_application_error(-20998, 'Технические даты совпадают!');
+  end if;
 end;
 /
 
 -- Проверка "Отмена платежа"
 declare
-  v_payment_id                  payment.payment_id%type := 3;
+  v_payment_id                  payment.payment_id%type := 45;
   v_payment_cancel_reason       payment.status_change_reason%type := 'ошибка пользователя';
   v_create_dtime_tech           payment.create_dtime_tech%type;
   v_update_dtime_tech           payment.update_dtime_tech%type;
@@ -117,7 +127,7 @@ end;
 
 -- Проверка "Успешное завершение платежа"
 declare
-  v_payment_id                  payment.payment_id%type := 41;
+  v_payment_id                  payment.payment_id%type := 45;
 begin 
   payment_api_pack.successful_finish_payment(v_payment_id);
 end;
@@ -125,7 +135,7 @@ end;
 
 -- Проверка "Добавление/обновление данных по платежу"
 declare
-  v_payment_id                  payment.payment_id%type := 41;
+  v_payment_id                  payment.payment_id%type := 45;
 
   v_payment_detail_data         t_payment_detail_array := t_payment_detail_array( t_payment_detail(1, 'Сайт банка XYZ')
                                                                                 , t_payment_detail(3, 'Оплата за услуги связи')
@@ -474,3 +484,27 @@ exception
     dbms_output.put_line('Удаление деталей платежа. Прямой DELETE. Возбуждено исключение. Ошибка: '||sqlerrm); 
 end;
 /
+
+-- Попытка перевести платеж в ошибочный статус по несуществующему платежу
+declare
+  v_payment_id payment.payment_id%type := 150; --
+  v_payment_error_reason        payment.status_change_reason%type := 'Тестовый перевод в ошибочный статус';
+begin
+  payment_api_pack.fail_payment(p_payment_id => v_payment_id, p_payment_error_reason => v_payment_error_reason);
+  raise_application_error(-20999, 'Unit-тест или API работают неккоректно');
+exception
+  when common_pack.e_object_notfound then
+    dbms_output.put_line('Работа с несуществующим объектом. Ошибка: '||sqlerrm); 
+end;
+/
+--  Попытка работы с неактивным платежом (платеж находится в финальном статусе)
+declare
+  v_payment_id payment.payment_id%type := 3; --
+  v_payment_error_reason        payment.status_change_reason%type := 'Тестовый перевод в ошибочный статус';
+begin
+  payment_api_pack.fail_payment(p_payment_id => v_payment_id, p_payment_error_reason => v_payment_error_reason);
+  raise_application_error(-20999, 'Unit-тест или API работают неккоректно');
+exception
+  when common_pack.e_object_inactive then
+    dbms_output.put_line('Платеж неактивен. Ошибка: '||sqlerrm); 
+end;

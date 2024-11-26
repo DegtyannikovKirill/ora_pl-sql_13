@@ -16,6 +16,9 @@ procedure check_payment_dml_allowed;
 -- проверка на возможность удаления данных
 procedure check_payment_delete;
 
+-- блокировка объекта "платеж"
+procedure try_lock_payment (p_payment_id payment.payment_id%type);
+
 /*** 
 * "Создание платежа"
 * @param p_payment_from_client_id - ОТ КАКОГО клиента платеж
