@@ -25,13 +25,12 @@ end create_payment_check_payment_detail_filds;
 
 procedure update_payment_detail_check_field_value is
   v_payment_id             payment.payment_id%type;
-  v_payment_detail_before  t_payment_detail_array;
   v_payment_detail_after   t_payment_detail_array;
   v_payment_detail         t_payment_detail_array;
   
+  v_count_not_matched_rows integer;
 begin
   v_payment_id := ut_common_payment_pack.create_default_payment;
-  v_payment_detail_before := ut_common_payment_pack.get_payment_datail_data(v_payment_id);  
 
   v_payment_detail := ut_common_payment_pack.get_random_payment_detail_data();
 
@@ -41,17 +40,22 @@ begin
 
   v_payment_detail_after := ut_common_payment_pack.get_payment_datail_data(v_payment_id);
 
-  -- тяжелый кейс, из-за MERGE однозначное не получится расписать. так что только UPDATE распишем
-  for rec in ( 
-    select t1.field_value as field_value_before, t2.field_value as field_value_after
-    from table(v_payment_detail_before)t1
+  begin
+    select count(1)
+    into v_count_not_matched_rows
+    from table(v_payment_detail) t1
        , table(v_payment_detail_after) t2
-    where t1.field_id = t2.field_id)
-  loop
-    if rec.field_value_before = rec.field_value_after then
-       ut_common_pack.ut_failed();
-    end if;
-  end loop;
+    where t1.field_id = t2.field_id
+      and t1.field_value != t2.field_value;
+  exception
+    when no_data_found then
+      v_count_not_matched_rows := 0;
+  end;
+  
+  if v_count_not_matched_rows > 0 then
+   ut_common_pack.ut_failed();
+  end if;
+
 end update_payment_detail_check_field_value;
 
 /***************************************************************************
