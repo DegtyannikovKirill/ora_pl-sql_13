@@ -5,9 +5,6 @@ create or replace package ut_payment_api_pack is
 --%test(Создание платежа. Проверка значений в таблице payment)
 procedure create_payment_check_payment_filds;
 
---%test(Создание платежа. Проверка значений в таблице payment_detail)
-procedure create_payment_check_payment_detail_filds;
-
 --%test(Создание платежа. Проверка технических дат)
 procedure create_payment_check_dtime_tech;
 
@@ -18,9 +15,10 @@ procedure fail_payment_check_status_and_resons;
 procedure fail_payment_check_dtime_tech;
 
 
------- Негативные тесты
---%test(Создание платежа. Создание с пустым массивом деталей платежа)
-procedure create_payment_empty_payment_detail;
+/***************************************************************************
+**************************    Негативные кейсы     *************************
+****************************************************************************/
+
 
 --%test(Создание платежа. Создание с пустым значением "сумма платежа")
 procedure create_payment_empty_payment_sum;
