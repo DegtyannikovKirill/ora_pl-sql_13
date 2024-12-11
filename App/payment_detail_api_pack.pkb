@@ -23,7 +23,7 @@ begin
   g_payment_detail_dml_allowed := false;
 end disallow_dml;
 
-/*** 
+/***
 * "Добавление/обновление данных по платежу"
 * @param p_payment_id           - ID платежа
 * @param p_payment_detail_data  - коллекция с деталями платежа
@@ -54,9 +54,9 @@ begin
 
   -- заблокируем платеж
   payment_api_pack.try_lock_payment(p_payment_id);
-  
+
   allow_dml;
-  
+
   merge into payment_detail pd
   using ( select p_payment_id as payment_id
                , value(v).field_id as field_id
@@ -70,14 +70,14 @@ begin
     values (v_arr.payment_id, v_arr.field_id, v_arr.field_value);
 
   disallow_dml;
-    
+
 exception
   when others then
     disallow_dml;
     raise;
 end insert_or_update_payment_detail;
 
-/*** 
+/***
 * "Удаление делатей платежа"
 * @param p_payment_id              - ID платежа
 * @param p_delete_payment_filelds  - массив из ID полей "детали платежа", которые надо удалить
@@ -99,10 +99,10 @@ begin
   payment_api_pack.try_lock_payment(p_payment_id);
 
   allow_dml;
-  
+
   delete payment_detail pd
   where pd.payment_id = p_payment_id
-    and pd.field_id in ( select column_value 
+    and pd.field_id in ( select column_value
                          from table(p_delete_payment_filelds));
 
   disallow_dml;
