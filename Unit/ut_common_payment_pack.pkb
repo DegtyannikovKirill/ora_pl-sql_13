@@ -58,7 +58,7 @@ create or replace package body ut_common_payment_pack is
   is
     v_note payment_detail.field_value%type;
   begin
-    get_random_strings(trunc(dbms_random.value(1, 15)), v_note);
+    get_random_strings(trunc(dbms_random.value(1, 10)), v_note);
     return v_note;
   end get_random_note;
   
@@ -110,7 +110,7 @@ create or replace package body ut_common_payment_pack is
   function get_random_reason return payment.status_change_reason%type is
     v_reason payment.status_change_reason%type;
   begin
-    get_random_strings(trunc(dbms_random.value(1, 25)), v_reason);
+    get_random_strings(trunc(dbms_random.value(1, 10)), v_reason);
 
     return v_reason;
   end get_random_reason;
