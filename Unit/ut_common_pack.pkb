@@ -5,3 +5,4 @@ create or replace package body ut_common_pack is
                             c_error_msg_test_failed);
   end;
 end ut_common_pack;
+/
