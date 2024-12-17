@@ -44,22 +44,23 @@ create or replace package body ut_common_payment_pack is
     return v_ip;
   end get_random_ip;
 
-  procedure get_random_strings(p_count_word number, result_string in out varchar2)
+  -- возвращает строку из 1-5 слов, по 5-10 символов
+  function get_random_strings return varchar2
   is
+    result_string varchar2(100);
+    v_count_word number;
   begin
-    if p_count_word > 0 then
-      for rec in 1 .. p_count_word loop
-        result_string := result_string||dbms_random.string('a', trunc(dbms_random.value(5, 10)))||' ';
-      end loop;
-    end if;
+    v_count_word := trunc(dbms_random.value(1, 5));
+    for rec in 1 .. v_count_word loop
+      result_string := result_string||dbms_random.string('a', trunc(dbms_random.value(5, 10)))||' ';
+    end loop;
+    return result_string;
   end;
 
   function get_random_note return payment_detail.field_value%type
   is
-    v_note payment_detail.field_value%type;
   begin
-    get_random_strings(trunc(dbms_random.value(1, 10)), v_note);
-    return v_note;
+    return get_random_strings;
   end get_random_note;
   
   function get_random_fraud return payment_detail.field_value%type
@@ -68,14 +69,23 @@ create or replace package body ut_common_payment_pack is
     return to_char(round(dbms_random.value(0, 1)));
   end get_random_fraud;
 
- function get_random_payment_detail_data return t_payment_detail_array is
+
+ function get_random_payment_detail_data(p_consistent number := 1) return t_payment_detail_array is
     t_payment_detail_data t_payment_detail_array;
   begin
-    t_payment_detail_data := t_payment_detail_array( t_payment_detail(c_detail_client_software, get_random_software())
-                                                   , t_payment_detail(c_detail_ip, get_random_ip())
-                                                   , t_payment_detail(c_detail_note, get_random_note())
-                                                   , t_payment_detail(c_detail_is_checked_fraud, get_random_fraud())
-                                                   );
+    if p_consistent = 1 then
+      t_payment_detail_data := t_payment_detail_array( t_payment_detail(c_detail_client_software, get_random_software())
+                                                     , t_payment_detail(c_detail_ip, get_random_ip())
+                                                     , t_payment_detail(c_detail_note, get_random_note())
+                                                     , t_payment_detail(c_detail_is_checked_fraud, get_random_fraud())
+                                                     );
+    else
+      t_payment_detail_data := t_payment_detail_array( t_payment_detail(c_detail_client_software, get_random_strings())
+                                                     , t_payment_detail(c_detail_ip, get_random_strings())
+                                                     , t_payment_detail(c_detail_note, get_random_strings())
+                                                     , t_payment_detail(c_detail_is_checked_fraud, get_random_strings())
+                                                     );
+    end if;
 
     return t_payment_detail_data;
   end get_random_payment_detail_data;
@@ -108,11 +118,8 @@ create or replace package body ut_common_payment_pack is
   end get_payment_datail_data; 
 
   function get_random_reason return payment.status_change_reason%type is
-    v_reason payment.status_change_reason%type;
   begin
-    get_random_strings(trunc(dbms_random.value(1, 10)), v_reason);
-
-    return v_reason;
+    return get_random_strings;
   end get_random_reason;
   
   function create_default_payment(p_payment_detail_data t_payment_detail_array := t_payment_detail_array()) return payment.payment_id%type is
@@ -133,7 +140,7 @@ create or replace package body ut_common_payment_pack is
     if p_payment_detail_data is not empty then
       v_payment_detail_data := p_payment_detail_data;
     else
-      v_payment_detail_data := get_random_payment_detail_data();
+      v_payment_detail_data := get_random_payment_detail_data(1);
     end if;
 
     v_payment_id := payment_api_pack.create_payment( p_payment_from_client_id => v_payment_from_client_id
